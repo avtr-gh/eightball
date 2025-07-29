@@ -65,7 +65,7 @@ jobs:
       - name: LogIn Fortify SSC and SC-SAST
         run: |
           Write-Host "Logging in to Fortify SSC and SC-SAST"
-          fcli config truststore set -f="C:\Program Files\Java\jdk-23\lib\security\cacerts"
+          fcli config truststore set -f="C:\Program Files\Java\jdk-17\lib\security\cacerts"
           fcli ssc session login --url $env:FORTIFY_SSC_URL --user $env:FORTIFY_SSC_USER --password $env:FORTIFY_SSC_PASS
           
           fcli sc-sast session login --ssc-url $env:FORTIFY_SSC_URL -t $env:FORTIFY_CI_TOKEN -c $env:FORTIFY_CLIENT_AUTH_TOKEN --connect-timeout 30s
