@@ -35,7 +35,7 @@ jobs:
         if: ${{ github.event.inputs.do-translation == 'true' }}
         run: |
           sourceanalyzer -b $env:FORTIFY_BUILD -clean
-          sourceanalyzer -b $env:FORTIFY_BUILD .\Eightball.java -source 11
+          sourceanalyzer -b $env:FORTIFY_BUILD .\Eightball.java -source 17
         shell: powershell
 
       - name: Run Fortify Scan
