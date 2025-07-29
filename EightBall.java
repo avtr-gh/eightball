@@ -9,12 +9,7 @@ public class EightBall {
 		} catch (Exception e) {
 			System.out.println("Invalid input.");
 		}
-		if(filename.contains("..") || filename.contains("/") || filename.contains("\\")){	
-			System.out.println("Invalid input.");
-			return;
-		}else{
-			new FileReader(filename).read(buffer);
-		}
+		new FileReader(filename).read(buffer);
 		System.out.println(buffer);
 	}
 }
