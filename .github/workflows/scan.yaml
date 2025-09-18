@@ -43,7 +43,7 @@ jobs:
         run: |
           $output = scancentral -url $env:FORTIFY_SC_URL start -upload `
             -versionid $env:FORTIFY_VERID `
-            -uptoken $env:FORTIFY_SC_CRTL_TOKEN `
+            -ssctoken $env:FORTIFY_SC_CRTL_TOKEN `
             -b $env:FORTIFY_BUILD `
             -scan | Out-String
 
