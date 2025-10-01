@@ -40,12 +40,12 @@ jobs:
 
       - name: Create Application
         run: |
-          fcli ssc appversion create $env:FORTIFY_VERID --auto-required-attrs --skip-if-exists --store version --issue-template "Prioritized High Risk Issue Template"
+          fcli ssc appversion create $env:FORTIFY_VERID --auto-required-attrs --skip-if-exists --issue-template "Prioritized High Risk Issue Template"
       
       - name: Run Fortify Scan
         run: |
           scancentral package -bt none -o package.zip 
-          fcli sc-sast scan start -f package.zip --publish-to $env:FORTIFY_VERID --sensor-version=25.2 --store x
+          fcli sc-sast scan start -f package.zip --publish-to $env:FORTIFY_VERID --store x
           fcli sc-sast scan wait-for ::x::jobToken --on-failure-state=terminate
       
       - name: Approve Artifact
