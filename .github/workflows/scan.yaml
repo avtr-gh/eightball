@@ -42,41 +42,14 @@ jobs:
         run: |
           fcli ssc appversion create $env:FORTIFY_VERID --auto-required-attrs --skip-if-exists --store version --issue-template "Prioritized High Risk Issue Template"
       
-      - name: Run Fortify Translation
-        run: |
-          sourceanalyzer -b $env:FORTIFY_BUILD -clean
-          sourceanalyzer -b $env:FORTIFY_BUILD .\Eightball.java -source 17
-        shell: powershell
-
       - name: Run Fortify Scan
         run: |
-          $output = scancentral -url $env:FORTIFY_SC_URL start -upload `
-            -versionid $env:FORTIFY_VERID `
-            -uptoken $env:FORTIFY_SC_CRTL_TOKEN `
-            -b $env:FORTIFY_BUILD `
-            -scan | Out-String
-
-          Write-Host "Fortify Scan Output: $output"
-
-          # Usar -match para extraer el token
-          if ($output -match "Submitted job and received token:\s*(\S+)") {
-              $token = $matches[1]
-          } else {
-              $token = "No token found"
-          }
-
-          Write-Host "Token extraido: $token"
-          echo "FORTIFY_JOB_TOKEN=$token" >> $env:GITHUB_ENV
-        env:
-          FORTIFY_SC_CRTL_TOKEN: ${{ secrets.FORTIFY_SC_CRTL_TOKEN }}
-        shell: powershell
+          scancentral package -bt none -o package.zip 
+          fcli sc-sast scan start -f package.zip --publish-to $env:FORTIFY_VERID --sensor-version=25.2 --store x
+          fcli sc-sast scan wait-for ::x::jobToken --on-failure-state=terminate
       
       - name: Approve Artifact
         run: | 
-          Write-Host "Approving Artifact token: ${{env.FORTIFY_JOB_TOKEN}}"  
-
-          fcli sc-sast scan wait-for $env:FORTIFY_JOB_TOKEN
-
           $artifactId = (fcli ssc artifact list --av=$env:FORTIFY_VERID --output=json | ConvertFrom-Json)[0].id
           
           echo "ARTIFACT_ID=$artifactId" >> $env:GITHUB_ENV
