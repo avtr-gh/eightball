@@ -2,11 +2,6 @@ name: Scan-powershell
 
 on:
   workflow_dispatch:
-    inputs:
-      do-translation:
-        description: 'Run Fortify translation step'
-        type: boolean
-        default: false
 
 jobs:
   Scan_Fortify:
@@ -31,15 +26,29 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: LogIn Fortify SSC and SC-SAST
+        run: |
+          Write-Host "Logging in to Fortify SSC and SC-SAST"
+          fcli config truststore set -f="C:\Program Files\Java\jdk-17\lib\security\cacerts"
+          fcli ssc session login --url $env:FORTIFY_SSC_URL --user $env:FORTIFY_SSC_USER --password $env:FORTIFY_SSC_PASS --sc-sast-url $env:FORTIFY_SC_URL -c $env:FORTIFY_CLIENT_AUTH_TOKEN --disable sc-dast
+        env:
+          FORTIFY_SSC_USER: ${{ secrets.FORTIFY_SSC_USER }}
+          FORTIFY_SSC_PASS: ${{ secrets.FORTIFY_SSC_PASS }}
+          FORTIFY_CI_TOKEN: ${{ secrets.FORTIFY_CI_TOKEN }}
+          FORTIFY_CLIENT_AUTH_TOKEN: ${{ secrets.FORTIFY_CLIENT_AUTH_TOKEN }}  
+        shell: powershell
+
+      - name: Create Application
+        run: |
+          fcli ssc appversion create $env:FORTIFY_VERID --auto-required-attrs --skip-if-exists --store version --issue-template "Prioritized High Risk Issue Template"
+      
       - name: Run Fortify Translation
-        if: ${{ github.event.inputs.do-translation == 'true' }}
         run: |
           sourceanalyzer -b $env:FORTIFY_BUILD -clean
           sourceanalyzer -b $env:FORTIFY_BUILD .\Eightball.java -source 17
         shell: powershell
 
       - name: Run Fortify Scan
-        if: ${{ github.event.inputs.do-translation == 'true' }}
         run: |
           $output = scancentral -url $env:FORTIFY_SC_URL start -upload `
             -versionid $env:FORTIFY_VERID `
@@ -62,20 +71,7 @@ jobs:
           FORTIFY_SC_CRTL_TOKEN: ${{ secrets.FORTIFY_SC_CRTL_TOKEN }}
         shell: powershell
       
-      - name: LogIn Fortify SSC and SC-SAST
-        run: |
-          Write-Host "Logging in to Fortify SSC and SC-SAST"
-          fcli config truststore set -f="C:\Program Files\Java\jdk-17\lib\security\cacerts"
-          fcli ssc session login --url $env:FORTIFY_SSC_URL --user $env:FORTIFY_SSC_USER --password $env:FORTIFY_SSC_PASS --sc-sast-url $env:FORTIFY_SSC_URL -c $env:FORTIFY_CLIENT_AUTH_TOKEN --disable sc-dast
-        env:
-          FORTIFY_SSC_USER: ${{ secrets.FORTIFY_SSC_USER }}
-          FORTIFY_SSC_PASS: ${{ secrets.FORTIFY_SSC_PASS }}
-          FORTIFY_CI_TOKEN: ${{ secrets.FORTIFY_CI_TOKEN }}
-          FORTIFY_CLIENT_AUTH_TOKEN: ${{ secrets.FORTIFY_CLIENT_AUTH_TOKEN }}  
-        shell: powershell
-
       - name: Approve Artifact
-        if: ${{ github.event.inputs.do-translation == 'true' }}
         run: | 
           Write-Host "Approving Artifact token: ${{env.FORTIFY_JOB_TOKEN}}"  
 
